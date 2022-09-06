@@ -12,15 +12,22 @@ const pty = nodePty.spawn(shell, [], {
   cols: 80,
   rows: 30,
   cwd: process.env.HOME,
-  env: process.env
+  env: Object.assign(
+    {},
+    ...Object.keys(process.env)
+      .filter((key: string) => process.env[key])
+      .map((key: string) => ({ [key]: process.env[key] }))
+  )
 });
 
-
+console.log('ddd')
 wss.on('connection', function connection(ws) {
 
   pty.onData(recv => {
     ws.send(recv);
   });
+
+  ws.onmessage()
 
   ws.on('message', function message(data) {
     console.log('received: %s', data);

@@ -2,9 +2,9 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "app.ts",
   "scripts": {
-    "start":"node app.js",
+    "start": "node app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,5 +14,8 @@
     "express": "^4.18.1",
     "node-pty": "^0.10.1",
     "ws": "^8.8.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.2"
   }
 }
