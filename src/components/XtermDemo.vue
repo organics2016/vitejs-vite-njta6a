@@ -15,7 +15,7 @@ onMounted(() => {
   const ws = new WebSocket(socketURL)
   const attachAddon = new AttachAddon(ws)
 
-  // term.open(terminal.value);
+  term.open(terminal.value);
   term.loadAddon(attachAddon);
 })
 
