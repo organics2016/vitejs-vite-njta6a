@@ -167,6 +167,10 @@ func ping(c *gin.Context) {
 }
 
 func main() {
+	// 125800000
+	// 0.0340246422893482
+	// 8,690
+	// 0.004352146263911
 	r := gin.Default()
 	r.GET("/ping", ping)
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
