@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -9,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -48,17 +46,6 @@ func wsSSH() *ssh.Client {
 	}
 
 	return sshClient
-}
-
-type websocketSSH struct {
-	buffer bytes.Buffer
-	mu     sync.Mutex
-}
-
-func (w *websocketSSH) Write(p []byte) (int, error) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	return w.buffer.Write(p)
 }
 
 func publicKeyAuthFunc(kPath string) ssh.AuthMethod {
