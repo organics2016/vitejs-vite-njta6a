@@ -62,6 +62,12 @@ func publicKeyAuthFunc(kPath string) ssh.AuthMethod {
 }
 
 func ping(c *gin.Context) {
+	// 前置 : 用户管理，容器管理
+
+	// 1. 携带user token 和 目标容器token
+	// 2. 验证user token
+	// 3. 通过目标容器token拿到连接config
+	// 4. 通过连接config创建连接，每个websocket对应一个ssh(页面刷新后重新创建ssh)
 
 	sshClient := wsSSH()
 
