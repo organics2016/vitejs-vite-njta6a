@@ -3,18 +3,14 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"golang.org/x/crypto/ssh"
 	"log"
 	"net/http"
 	"os"
 	"sync"
 	"time"
-	"unicode/utf8"
-
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/transform"
 )
 
 var upGrader = websocket.Upgrader{
@@ -95,9 +91,6 @@ func ping(c *gin.Context) {
 	}
 	defer session.Close()
 
-	// session.Stdout = os.Stdout
-	// session.Stderr = os.Stderr
-
 	stdoutPipe, err := session.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -105,15 +98,13 @@ func ping(c *gin.Context) {
 
 	go func() {
 		for {
-			buff := make([]byte, 4*1024)
-			stdoutPipe.Read(buff)
-
-			fmt.Printf("%t\n", utf8.Valid(buff))
-			buff, _, _ = transform.Bytes(unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewEncoder(), buff)
-			fmt.Printf("%t\n", utf8.Valid(buff))
-
-			ws.WriteMessage(websocket.TextMessage, buff)
-
+			message := make([]byte, 4*1024)
+			_, err := stdoutPipe.Read(message)
+			if err != nil {
+				continue
+			}
+			fmt.Printf("send : %s\n", string(message))
+			ws.WriteMessage(websocket.TextMessage, message)
 		}
 	}()
 
@@ -136,19 +127,18 @@ func ping(c *gin.Context) {
 
 	go func() {
 		for {
-			messageType, message, err := ws.ReadMessage()
+			_, message, err := ws.ReadMessage()
 			if err != nil {
 				continue
 			}
-			fmt.Printf("%s : %c : %t\n", string(message), message, utf8.Valid(message))
-			ws.WriteMessage(messageType, message)
+			fmt.Printf("receive : %s\n", string(message))
 			stdinPipe.Write(message)
 		}
 	}()
 
 	// Set up terminal modes
 	modes := ssh.TerminalModes{
-		ssh.ECHO:          0,     // disable echoing
+		//ssh.ECHO:          0,     // disable echoing
 		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
 		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
 	}
