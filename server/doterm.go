@@ -98,7 +98,7 @@ func ping(c *gin.Context) {
 
 	go func() {
 		for {
-			message := make([]byte, 4*1024)
+			message := make([]byte, 1*1024)
 			_, err := stdoutPipe.Read(message)
 			if err != nil {
 				continue
@@ -108,17 +108,22 @@ func ping(c *gin.Context) {
 		}
 	}()
 
-	// go func() {
-	// 	buff := []byte{}
-	// 	for {
-	// 		stderrPipe.Read(buff)
-	// 		if len(buff) == 0 {
-	// 			continue
-	// 		}
-	// 		ws.WriteMessage(websocket.TextMessage, buff)
-	// 		buff = buff[0:0]
-	// 	}
-	// }()
+	stderrPipe, err := session.StderrPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		for {
+			message := make([]byte, 4*1024)
+			_, err := stderrPipe.Read(message)
+			if err != nil {
+				continue
+			}
+			fmt.Printf("err : %s\n", string(message))
+			ws.WriteMessage(websocket.TextMessage, message)
+		}
+	}()
 
 	stdinPipe, err := session.StdinPipe()
 	if err != nil {
