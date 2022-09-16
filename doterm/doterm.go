@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"net/http"
-	"organics.ink/doterm/connection"
+	"organics.ink/doterm/connector"
 	"os"
 )
 
@@ -31,7 +31,7 @@ func ping(c *gin.Context) {
 	// 3. 通过目标容器token拿到连接config
 	// 4. 通过连接config创建连接，每个websocket对应一个ssh(页面刷新后重新创建ssh)
 
-	cc := &connection.WebSocketSSH{
+	cc := &connector.WebSocketSSH{
 		Request:   c.Request,
 		Writer:    c.Writer,
 		Host:      "127.0.0.1",
