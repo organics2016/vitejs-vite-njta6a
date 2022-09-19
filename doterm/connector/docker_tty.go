@@ -16,7 +16,7 @@ type DockerTTY struct {
 func (d *DockerTTY) Connect() error {
 
 	ctx := context.Background()
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost("http://127.0.0.1:2375"), client.WithAPIVersionNegotiation())
 	if err != nil {
 		panic(err)
 	}
