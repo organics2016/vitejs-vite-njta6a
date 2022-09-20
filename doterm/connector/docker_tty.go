@@ -1,31 +1,31 @@
 package connector
 
 import (
-	"context"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/gorilla/websocket"
-	"net/http"
 )
 
-type DockerTTY struct {
-	Request     *http.Request
-	Writer      http.ResponseWriter
+type DockerTty struct {
+	Websocket
 	Host        string
 	ContainerID string
 
-	websocket *websocket.Conn
+	tty types.HijackedResponse
 }
 
-func (d *DockerTTY) Connect() error {
+func (dockerTty *DockerTty) Connect() {
 
-	ctx := context.Background()
-	cli, err := client.NewClientWithOpts(client.WithHost("http://127.0.0.1:2375"), client.WithAPIVersionNegotiation())
+	dockerTty.initWebSocket(dockerTty)
+	// 如果websocket先断开连接，这里会重复执行一次，当容器先断开连接时或发生意外，在这里释放资源
+	defer dockerTty.Close()
+
+	cli, err := client.NewClientWithOpts(client.WithHost(dockerTty.Host), client.WithAPIVersionNegotiation())
 	if err != nil {
-		panic(err)
+		dockerTty.outputError(err)
+		return
 	}
 
-	exec, err := cli.ContainerExecCreate(ctx, d.ContainerID, types.ExecConfig{
+	exec, err := cli.ContainerExecCreate(dockerTty.ctx, dockerTty.ContainerID, types.ExecConfig{
 		AttachStdin:  true,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -33,19 +33,27 @@ func (d *DockerTTY) Connect() error {
 		Cmd:          []string{"/bin/bash"},
 	})
 	if err != nil {
-		panic(err)
+		dockerTty.outputError(err)
+		return
 	}
 
-	tty, err := cli.ContainerExecAttach(ctx, exec.ID, types.ExecStartCheck{Detach: false, Tty: true})
+	tty, err := cli.ContainerExecAttach(dockerTty.ctx, exec.ID, types.ExecStartCheck{Detach: false, Tty: true})
 	if err != nil {
-		panic(err)
+		dockerTty.outputError(err)
+		return
 	}
+	dockerTty.tty = tty
 
-	tty.Conn.Write([]byte("ls\r"))
-	//scanner := bufio.NewScanner(response.Conn)
-	//for scanner.Scan() {
-	//	fmt.Println(scanner.Text())
-	//}
-	return nil
+	dockerTty.readerToWebsocket(tty.Conn)
+	dockerTty.websocketToWriter(tty.Conn)
 
+	<-dockerTty.ctx.Done()
+}
+
+func (dockerTty *DockerTty) Close() {
+	dockerTty.cancel()
+
+	dockerTty.tty.Conn.Write([]byte("exit\r"))
+	dockerTty.tty.Close()
+	dockerTty.tty.CloseWrite()
 }
