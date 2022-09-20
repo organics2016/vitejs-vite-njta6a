@@ -144,7 +144,18 @@ func test7() {
 
 }
 
+func test8() {
+
+	defer print("aaaaa")
+
+	if true {
+		print("bbbbb")
+		//return
+	}
+
+}
+
 func main() {
-	test7()
+	test8()
 	println("dddddd")
 }

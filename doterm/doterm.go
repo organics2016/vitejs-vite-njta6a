@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"net/http"
@@ -42,13 +41,13 @@ func ping(c *gin.Context) {
 		Port:      2222,
 	}
 
-	if err := cc.Connect(); err != nil {
-		err := err.(stackTracer)
-		cc.OutputError(err)
-		fmt.Printf("%+v\n", err.StackTrace()[0:]) // top two frames
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
+	//if err := cc.Connect(); err != nil {
+	//	err := err.(stackTracer)
+	//	fmt.Printf("%+v\n", err.StackTrace()[0:]) // top two frames
+	//	c.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
+	cc.Connect()
 	c.Status(http.StatusOK)
 
 	//st := err.StackTrace()
