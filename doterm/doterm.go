@@ -31,9 +31,11 @@ func ping(c *gin.Context) {
 	// 3. 通过目标容器token拿到连接config
 	// 4. 通过连接config创建连接，每个websocket对应一个ssh(页面刷新后重新创建ssh)
 
-	cc := &connector.WebSocketSSH{
-		Request:   c.Request,
-		Writer:    c.Writer,
+	cc := &connector.SSHTty{
+		Websocket: connector.Websocket{
+			Request:  c.Request,
+			Response: c.Writer},
+
 		Host:      "127.0.0.1",
 		Username:  "vagrant",
 		SecretKey: readKey("D:/vagrant/.vagrant/machines/default/virtualbox/private_key"),
@@ -42,6 +44,7 @@ func ping(c *gin.Context) {
 
 	if err := cc.Connect(); err != nil {
 		err := err.(stackTracer)
+		cc.OutputError(err)
 		fmt.Printf("%+v\n", err.StackTrace()[0:]) // top two frames
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
