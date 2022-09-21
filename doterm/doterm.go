@@ -30,25 +30,25 @@ func ping(c *gin.Context) {
 	// 3. 通过目标容器token拿到连接config
 	// 4. 通过连接config创建连接，每个websocket对应一个ssh(页面刷新后重新创建ssh)
 
-	//cc := &connector.SSHTty{
-	//	Websocket: connector.Websocket{
-	//		Request:  c.Request,
-	//		Response: c.Writer},
-	//
-	//	Host:      "127.0.0.1",
-	//	Username:  "vagrant",
-	//	SecretKey: readKey("D:/vagrant/.vagrant/machines/default/virtualbox/private_key"),
-	//	Port:      2222,
-	//}
-
-	cc := &connector.DockerTty{
+	cc := &connector.SSHTty{
 		Websocket: connector.Websocket{
 			Request:  c.Request,
 			Response: c.Writer},
 
-		Host:        "tcp://127.0.0.1:2375",
-		ContainerID: "62c41d9cf865b22ba5de8e45462b5744ae34ffd056dbab48542ff1e48c690678",
+		Host:      "127.0.0.1",
+		Username:  "vagrant",
+		SecretKey: readKey("D:/vagrant/.vagrant/machines/default/virtualbox/private_key"),
+		Port:      2222,
 	}
+
+	//cc := &connector.DockerTty{
+	//	Websocket: connector.Websocket{
+	//		Request:  c.Request,
+	//		Response: c.Writer},
+	//
+	//	Host:        "tcp://127.0.0.1:2375",
+	//	ContainerID: "62c41d9cf865b22ba5de8e45462b5744ae34ffd056dbab48542ff1e48c690678",
+	//}
 
 	//if err := cc.Connect(); err != nil {
 	//	err := err.(stackTracer)

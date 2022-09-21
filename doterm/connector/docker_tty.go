@@ -15,8 +15,7 @@ type DockerTty struct {
 
 func (dockerTty *DockerTty) Connect() {
 
-	dockerTty.initWebSocket(dockerTty)
-	// 如果websocket先断开连接，这里会重复执行一次，当容器先断开连接时或发生意外，在这里释放资源
+	dockerTty.initWebSocket()
 	defer dockerTty.Close()
 
 	cli, err := client.NewClientWithOpts(client.WithHost(dockerTty.Host), client.WithAPIVersionNegotiation())
@@ -47,11 +46,10 @@ func (dockerTty *DockerTty) Connect() {
 	dockerTty.readerToWebsocket(tty.Conn)
 	dockerTty.websocketToWriter(tty.Conn)
 
-	<-dockerTty.ctx.Done()
 }
 
 func (dockerTty *DockerTty) Close() {
-	dockerTty.cancel()
+	<-dockerTty.ctx.Done()
 
 	if dockerTty.tty != (types.HijackedResponse{}) {
 		dockerTty.tty.Close()

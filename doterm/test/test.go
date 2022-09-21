@@ -146,12 +146,11 @@ func test7() {
 
 func test8() {
 
-	defer print("aaaaa")
-
 	if true {
-		print("bbbbb")
-		//return
+		panic("bbb")
 	}
+
+	defer print("aaaaa")
 
 }
 

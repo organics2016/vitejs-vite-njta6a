@@ -21,8 +21,7 @@ type SSHTty struct {
 
 func (sshTty *SSHTty) Connect() {
 
-	sshTty.initWebSocket(sshTty)
-	// 如果websocket先断开连接，这里会重复执行一次，当容器先断开连接时或发生意外，在这里释放资源
+	sshTty.initWebSocket()
 	defer sshTty.Close()
 
 	//创建ssh
@@ -104,13 +103,10 @@ func (sshTty *SSHTty) Connect() {
 		return
 	}
 
-	// 阻塞，直到websocket断开或容器断开，这种断开视为正常退出
-	if err := session.Wait(); err != nil {
-	}
 }
 
 func (sshTty *SSHTty) Close() {
-	sshTty.cancel()
+	<-sshTty.ctx.Done()
 
 	if sshTty.sshSession != nil {
 		sshTty.sshSession.Close()
@@ -121,5 +117,4 @@ func (sshTty *SSHTty) Close() {
 	if sshTty.websocket != nil {
 		sshTty.websocket.Close()
 	}
-
 }
