@@ -48,7 +48,7 @@ func (ws *Websocket) outputError(err error) {
 
 func (ws *Websocket) readerToWebsocket(reader io.Reader) {
 	go func() {
-		message := make([]byte, 1*1024)
+		message := make([]byte, 100*1024)
 		for ws.ctx.Err() == nil {
 			n, err := reader.Read(message)
 			if err != nil {
