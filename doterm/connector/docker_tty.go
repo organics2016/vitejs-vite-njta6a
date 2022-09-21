@@ -13,18 +13,18 @@ type DockerTty struct {
 	tty types.HijackedResponse
 }
 
-func (dockerTty *DockerTty) Connect() {
+func (tty *DockerTty) Connect() {
 
-	dockerTty.initWebSocket()
-	defer dockerTty.Close()
+	tty.initWebSocket()
+	defer tty.Close()
 
-	cli, err := client.NewClientWithOpts(client.WithHost(dockerTty.Host), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.WithHost(tty.Host), client.WithAPIVersionNegotiation())
 	if err != nil {
-		dockerTty.outputError(err)
+		tty.outputError(err)
 		return
 	}
 
-	exec, err := cli.ContainerExecCreate(dockerTty.ctx, dockerTty.ContainerID, types.ExecConfig{
+	exec, err := cli.ContainerExecCreate(tty.ctx, tty.ContainerID, types.ExecConfig{
 		AttachStdin:  true,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -32,29 +32,29 @@ func (dockerTty *DockerTty) Connect() {
 		Cmd:          []string{"/bin/bash"},
 	})
 	if err != nil {
-		dockerTty.outputError(err)
+		tty.outputError(err)
 		return
 	}
 
-	tty, err := cli.ContainerExecAttach(dockerTty.ctx, exec.ID, types.ExecStartCheck{Detach: false, Tty: true})
+	attach, err := cli.ContainerExecAttach(tty.ctx, exec.ID, types.ExecStartCheck{Detach: false, Tty: true})
 	if err != nil {
-		dockerTty.outputError(err)
+		tty.outputError(err)
 		return
 	}
-	dockerTty.tty = tty
+	tty.tty = attach
 
-	dockerTty.readerToWebsocket(tty.Conn)
-	dockerTty.websocketToWriter(tty.Conn)
+	tty.readerToWebsocket(attach.Conn)
+	tty.websocketToWriter(attach.Conn)
 
 }
 
-func (dockerTty *DockerTty) Close() {
-	<-dockerTty.ctx.Done()
+func (tty *DockerTty) Close() {
+	<-tty.ctx.Done()
 
-	if dockerTty.tty != (types.HijackedResponse{}) {
-		dockerTty.tty.Close()
+	if tty.tty != (types.HijackedResponse{}) {
+		tty.tty.Close()
 	}
-	if dockerTty.websocket != nil {
-		dockerTty.websocket.Close()
+	if tty.websocket != nil {
+		tty.websocket.Close()
 	}
 }
