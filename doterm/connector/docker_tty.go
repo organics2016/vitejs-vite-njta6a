@@ -53,7 +53,10 @@ func (dockerTty *DockerTty) Connect() {
 func (dockerTty *DockerTty) Close() {
 	dockerTty.cancel()
 
-	dockerTty.tty.Conn.Write([]byte("exit\r"))
-	dockerTty.tty.Close()
-	dockerTty.tty.CloseWrite()
+	if dockerTty.tty != (types.HijackedResponse{}) {
+		dockerTty.tty.Close()
+	}
+	if dockerTty.websocket != nil {
+		dockerTty.websocket.Close()
+	}
 }
