@@ -8,11 +8,16 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/pkg/errors"
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
 	"io"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/remotecommand"
 	"os"
+	"time"
 )
 
 func test() {
@@ -26,11 +31,6 @@ func test() {
 	bs_UTF8BE, _, _ := transform.Bytes(unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder(), bs_UTF16BE)
 
 	fmt.Printf("%v\n%v\n%v\n%v\n%v\n%v\n", bs_UTF16LE, bs_UTF16BE, bs_UTF16LEN, bs_UTF16BEN, bs_UTF8LE, bs_UTF8BE)
-}
-
-func test2() error {
-
-	return errors.New("dddddd")
 }
 
 func test3() {
@@ -154,7 +154,76 @@ func test8() {
 
 }
 
+func test9() {
+	//var kubeconfig *string
+	//if home := homedir.HomeDir(); home != "" {
+	//	kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	//} else {
+	//	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	//}
+	//flag.Parse()
+
+	kubeconfig := "D:/vagrant/config"
+
+	// use the current context in kubeconfig
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Printf("%+v\n", config)
+
+	// create the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	//pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
+	//if err != nil {
+	//	panic(err.Error())
+	//}
+	//fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
+
+	req := clientset.CoreV1().
+		RESTClient().
+		Get().
+		Namespace("default").
+		Resource("pods").
+		Name("shell-demo").
+		SubResource("exec").
+		VersionedParams(
+			&corev1.PodExecOptions{
+				Command: []string{"/bin/sh"},
+				Stdin:   true,
+				Stdout:  true,
+				Stderr:  true,
+				TTY:     true,
+			}, scheme.ParameterCodec)
+
+	fmt.Println(req.URL())
+
+	exec, err := remotecommand.NewSPDYExecutor(config, "GET", req.URL())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = exec.Stream(remotecommand.StreamOptions{
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+		Tty:    true,
+	})
+	if err != nil {
+		fmt.Println("error streaming connection", err)
+		return
+	}
+
+	time.Sleep(10 * time.Second)
+}
+
 func main() {
-	test8()
+	test9()
 	println("dddddd")
 }
