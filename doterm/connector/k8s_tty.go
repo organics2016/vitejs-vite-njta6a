@@ -1,6 +1,7 @@
 package connector
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -93,7 +94,9 @@ func (tty *K8STty) Read(p []byte) (n int, err error) {
 		tty.cancel()
 		return 0, err
 	}
-	//fmt.Printf("dist: [%+v] size : %d --- src: [%+v] size : %d \n", string(p), len(p), string(message), len(message))
+	//fmt.Printf("%v : %t\n", string(p), utf8.Valid(p))
+	//message, _ = unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewEncoder().Bytes(message)
+	fmt.Printf("dist: [%+v] size : %d --- src: [%+v] size : %d \n", string(p), len(p), string(message), len(message))
 	c := copy(p, message)
 	//fmt.Printf("dist: [%+v] size : %d --- src: [%+v] size : %d \n", string(p), len(p), string(message), len(message))
 	return c, nil
