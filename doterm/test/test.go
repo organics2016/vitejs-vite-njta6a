@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
 	"os"
@@ -171,6 +172,15 @@ func test9() {
 		panic(err.Error())
 	}
 
+	config = &rest.Config{
+		Host: "https://127.0.0.1:49154",
+		TLSClientConfig: rest.TLSClientConfig{
+			CertFile: "D:/vagrant/.minikube/profiles/multinode-demo/client.crt",
+			KeyFile:  "D:/vagrant/.minikube/profiles/multinode-demo/client.key",
+			CAFile:   "D:/vagrant/.minikube/ca.crt",
+		},
+	}
+
 	fmt.Printf("%+v\n", config)
 
 	// create the clientset
@@ -201,7 +211,7 @@ func test9() {
 				TTY:     true,
 			}, scheme.ParameterCodec)
 
-	fmt.Println(req.URL())
+	fmt.Println(req)
 
 	exec, err := remotecommand.NewSPDYExecutor(config, "GET", req.URL())
 	if err != nil {
@@ -223,7 +233,15 @@ func test9() {
 	time.Sleep(10 * time.Second)
 }
 
+func test10() {
+
+	p := make([]byte, 10, 20)
+	p = nil
+	fmt.Println(len(p))
+
+}
+
 func main() {
-	test9()
+	test10()
 	println("dddddd")
 }
