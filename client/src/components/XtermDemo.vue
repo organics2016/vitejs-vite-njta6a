@@ -26,17 +26,22 @@ function utf16To8(input: string) {
 onMounted(() => {
   console.log(terminal.value);// <div>
 
-  const socketURL = "ws://127.0.0.1:8080/ping"
+  const socketURL = "ws://127.0.0.1:8080/doterm?env=FFFF"
   const ws = new WebSocket(socketURL)
-  const attachAddon = new AttachAddon(ws)
-  term.loadAddon(attachAddon);
 
   //连接打开时触发
   ws.onopen = function (evt) {
     console.log("Connection open ...");
+
+    ws.send("aaa")
   };
+
+  const attachAddon = new AttachAddon(ws)
+  term.loadAddon(attachAddon);
   term.open(terminal.value)
   term.focus()
+
+
 
   // term.onData(send => {
   //   console.log("received: %s", send)

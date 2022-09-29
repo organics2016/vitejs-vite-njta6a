@@ -8,12 +8,9 @@ import (
 )
 
 type Websocket struct {
-	Request  *http.Request
-	Response http.ResponseWriter
-
-	websocket *websocket.Conn
-	ctx       context.Context
-	cancel    context.CancelFunc
+	wsConn *websocket.Conn
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // 升级get请求为webSocket协议
@@ -23,27 +20,28 @@ var upGrader = websocket.Upgrader{
 	},
 }
 
-func (ws *Websocket) initWebSocket() {
+func InitWebSocket(w http.ResponseWriter, r *http.Request, ctx context.Context) Websocket {
 	//创建websocket
-	conn, err := upGrader.Upgrade(ws.Response, ws.Request, nil)
+	conn, err := upGrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
-	ws.websocket = conn
-	ws.ctx, ws.cancel = context.WithCancel(context.Background())
 
-	ws.websocket.SetCloseHandler(func(code int, text string) error {
+	ws := Websocket{
+		wsConn: conn,
+	}
+	ws.ctx, ws.cancel = context.WithCancel(ctx)
+	ws.wsConn.SetCloseHandler(func(code int, text string) error {
 		ws.cancel()
 		return nil
 	})
+	return ws
 }
 
-func (ws *Websocket) outputError(err error) {
-	if err := ws.websocket.WriteMessage(websocket.TextMessage, []byte(err.Error())); err != nil {
-		ws.cancel()
-		panic(err)
-	}
+func (ws *Websocket) OutputError(err error) {
+	ws.wsConn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
 	ws.cancel()
+	ws.wsConn.Close()
 }
 
 func (ws *Websocket) readerToWebsocket(reader io.Reader) {
@@ -55,7 +53,7 @@ func (ws *Websocket) readerToWebsocket(reader io.Reader) {
 				ws.cancel()
 				return
 			} else if n > 0 {
-				if err := ws.websocket.WriteMessage(websocket.TextMessage, message[0:n]); err != nil {
+				if err := ws.wsConn.WriteMessage(websocket.TextMessage, message[0:n]); err != nil {
 					return
 				}
 			}
@@ -66,7 +64,7 @@ func (ws *Websocket) readerToWebsocket(reader io.Reader) {
 func (ws *Websocket) websocketToWriter(write io.Writer) {
 	go func() {
 		for ws.ctx.Err() == nil {
-			_, message, err := ws.websocket.ReadMessage()
+			_, message, err := ws.wsConn.ReadMessage()
 			if err != nil {
 				ws.cancel()
 				return

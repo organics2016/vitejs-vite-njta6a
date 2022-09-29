@@ -1,7 +1,6 @@
 package connector
 
 import (
-	"fmt"
 	"github.com/gorilla/websocket"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -23,9 +22,6 @@ type K8STty struct {
 
 func (tty *K8STty) Connect() {
 
-	tty.initWebSocket()
-	defer tty.Close()
-
 	config := &rest.Config{
 		Host: tty.Host,
 		TLSClientConfig: rest.TLSClientConfig{
@@ -38,7 +34,7 @@ func (tty *K8STty) Connect() {
 	// create the clientset
 	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		tty.outputError(err)
+		tty.OutputError(err)
 		return
 	}
 
@@ -60,7 +56,7 @@ func (tty *K8STty) Connect() {
 
 	exec, err := remotecommand.NewSPDYExecutor(config, http.MethodPost, req.URL())
 	if err != nil {
-		tty.outputError(err)
+		tty.OutputError(err)
 		return
 	}
 
@@ -74,7 +70,7 @@ func (tty *K8STty) Connect() {
 	tty.cancel()
 
 	if err != nil {
-		tty.outputError(err)
+		tty.OutputError(err)
 		return
 	}
 
@@ -83,20 +79,20 @@ func (tty *K8STty) Connect() {
 func (tty *K8STty) Close() {
 	<-tty.ctx.Done()
 
-	if tty.websocket != nil {
-		tty.websocket.Close()
+	if tty.Websocket.wsConn != nil {
+		tty.Websocket.wsConn.Close()
 	}
 }
 
 func (tty *K8STty) Read(p []byte) (n int, err error) {
-	_, message, err := tty.websocket.ReadMessage()
+	_, message, err := tty.Websocket.wsConn.ReadMessage()
 	if err != nil {
 		tty.cancel()
 		return 0, err
 	}
 	//fmt.Printf("%v : %t\n", string(p), utf8.Valid(p))
 	//message, _ = unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewEncoder().Bytes(message)
-	fmt.Printf("dist: [%+v] size : %d --- src: [%+v] size : %d \n", string(p), len(p), string(message), len(message))
+	//fmt.Printf("dist: [%+v] size : %d --- src: [%+v] size : %d \n", string(p), len(p), string(message), len(message))
 	c := copy(p, message)
 	//fmt.Printf("dist: [%+v] size : %d --- src: [%+v] size : %d \n", string(p), len(p), string(message), len(message))
 	return c, nil
@@ -106,7 +102,7 @@ func (tty *K8STty) Write(p []byte) (n int, err error) {
 	//fmt.Printf("Write: [%+v] size : %d utf8: %t\n", string(p), len(p), utf8.Valid(p))
 	//e, _ := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewEncoder().Bytes(p)
 	//fmt.Printf("EWrite: [%+v] size : %d utf8: %t\n", string(e), len(e), utf8.Valid(e))
-	if err := tty.websocket.WriteMessage(websocket.BinaryMessage, p); err != nil {
+	if err := tty.Websocket.wsConn.WriteMessage(websocket.BinaryMessage, p); err != nil {
 		tty.cancel()
 		return 0, err
 	}
