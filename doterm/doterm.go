@@ -50,7 +50,7 @@ func getConnData(cp *ConnParam) (*ConnData, error) {
 	if err != nil {
 		return nil, err
 	}
-	request.Header.Add(restful.HEADER_ContentType, "application/json")
+	request.Header.Set(restful.HEADER_ContentType, "application/json")
 
 	client := &http.Client{}
 	response, err := client.Do(request)
