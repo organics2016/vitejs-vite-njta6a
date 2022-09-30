@@ -2,18 +2,18 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"github.com/emicklei/go-restful/v3"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
+	"io"
 	"net/http"
+	"net/url"
 	"organics.ink/doterm/cloud"
 	"organics.ink/doterm/connector"
 	"os"
 )
-
-type stackTracer interface {
-	StackTrace() errors.StackTrace
-	Error() string
-}
 
 func readKey(filePath string) []byte {
 	key, err := os.ReadFile(filePath)
@@ -24,8 +24,8 @@ func readKey(filePath string) []byte {
 }
 
 type Connection struct {
-	Env   string `form:"env" binding:"required"`
 	Token string `form:"token" binding:"required"`
+	Param string `form:"param"`
 }
 
 func doterm(c *gin.Context) {
@@ -39,13 +39,36 @@ func doterm(c *gin.Context) {
 		return
 	}
 
-	if connection.Env == "local" {
-		// TODO
+	// TODO 获取 连接中心 服务配置
+	// 使用token请求连接中心
+	// 获取连接信息，开始连接
+
+	URL, err := url.Parse(BootOptions.Server)
+	if err != nil {
+		panic(err)
+	}
+	params := url.Values{}
+	params.Set("token", connection.Token)
+	params.Set("param", connection.Param)
+	URL.RawQuery = params.Encode()
+
+	request, err := http.NewRequest(http.MethodGet, URL.String(), nil)
+	if err != nil {
 		return
 	}
-
-	auth := cloud.JianmuAuthorize{}
-	connData := auth.Authorize()
+	request.Header.Add(restful.HEADER_ContentType, "application/json")
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+	connData := &cloud.ConnData{}
+	json.Unmarshal(body, connData)
 
 	var tty connector.Manager
 
@@ -89,7 +112,21 @@ func doterm(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+type bootOptions struct {
+	Server string
+}
+
+var BootOptions = &bootOptions{}
+
+func parseFlags() {
+	flag.StringVar(&BootOptions.Server, "s", "http://127.0.0.1/", "aaaaaa")
+	flag.Parse()
+}
+
 func main() {
+	parseFlags()
+	fmt.Printf("%v+", BootOptions)
+
 	server := gin.Default()
 	server.GET("/doterm", doterm)
 	server.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
