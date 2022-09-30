@@ -101,8 +101,8 @@ func connTTY(connData *ConnData, websocket *connector.Websocket) error {
 		tty = &connector.DockerTty{
 			Websocket: websocket,
 
-			Host:        addr, //"tcp://127.0.0.1:2375"
-			ContainerID: connData.ContainerID,
+			Host:        addr,                 //"tcp://127.0.0.1:2375"
+			ContainerID: connData.ContainerID, // "62c41d9cf865b22ba5de8e45462b5744ae34ffd056dbab48542ff1e48c690678"
 		}
 		break
 	case "kubernetes":
