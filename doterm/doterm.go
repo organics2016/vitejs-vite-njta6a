@@ -1,22 +1,15 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/emicklei/go-restful/v3"
 	"io"
 	"net/http"
 	"net/url"
 	"organics.ink/doterm/connector"
-	"os"
 )
-
-func readKey(filePath string) []byte {
-	key, err := os.ReadFile(filePath)
-	if err != nil {
-		panic(err)
-	}
-	return key
-}
 
 type ConnData struct {
 	Host string `json:"host,omitempty"`
@@ -76,45 +69,77 @@ func getConnData(cp *ConnParam) (*ConnData, error) {
 	return connData, nil
 }
 
-func connTTY(connData *ConnData, websocket *connector.Websocket) {
+func connTTY(connData *ConnData, websocket *connector.Websocket) error {
 	var tty connector.TTY
 
 	switch connData.Type {
 	case "host":
+
+		pubKey, err := base64.StdEncoding.DecodeString(connData.PubKey)
+		if err != nil {
+			return err
+		}
+		priKey, err := base64.StdEncoding.DecodeString(connData.PriKey)
+		if err != nil {
+			return err
+		}
+
 		tty = &connector.SSHTty{
 			Websocket: websocket,
 
-			Host:      "127.0.0.1",
-			Username:  "vagrant",
-			SecretKey: readKey("D:/vagrant/.vagrant/machines/default/virtualbox/private_key"),
-			Port:      2222,
+			Host:     connData.Host,
+			Port:     connData.Port,
+			Username: connData.Username,
+			Password: connData.Password,
+			PubKey:   pubKey,
+			PriKey:   priKey,
 		}
 		break
 	case "docker":
+
+		addr := fmt.Sprintf("tcp://%s:%d", connData.Host, connData.Port)
 		tty = &connector.DockerTty{
 			Websocket: websocket,
 
-			Host:        "tcp://127.0.0.1:2375",
-			ContainerID: "62c41d9cf865b22ba5de8e45462b5744ae34ffd056dbab48542ff1e48c690678",
+			Host:        addr, //"tcp://127.0.0.1:2375"
+			ContainerID: connData.ContainerID,
 		}
 		break
 	case "kubernetes":
+		certData, err := base64.StdEncoding.DecodeString(connData.CertData)
+		if err != nil {
+			return err
+		}
+		keyData, err := base64.StdEncoding.DecodeString(connData.KeyData)
+		if err != nil {
+			return err
+		}
+		caData, err := base64.StdEncoding.DecodeString(connData.CAData)
+		if err != nil {
+			return err
+		}
+
+		addr := fmt.Sprintf("https://%s:%d", connData.Host, connData.Port)
 		tty = &connector.K8STty{
 			Websocket: websocket,
 
-			Host:         "https://127.0.0.1:49154",
-			PodNamespace: "default",
-			PodName:      "shell-demo",
-			CertData:     readKey("D:/vagrant/.minikube/profiles/multinode-demo/client.crt"),
-			KeyData:      readKey("D:/vagrant/.minikube/profiles/multinode-demo/client.key"),
-			CAData:       readKey("D:/vagrant/.minikube/ca.crt"),
+			Host:         addr,                  //"https://127.0.0.1:49154",
+			PodNamespace: connData.PodNamespace, //"default",
+			PodName:      connData.PodName,      //"shell-demo",
+			CertData:     certData,              //readKey("D:/vagrant/.minikube/profiles/multinode-demo/client.crt"),
+			KeyData:      keyData,               //readKey("D:/vagrant/.minikube/profiles/multinode-demo/client.key"),
+			CAData:       caData,                //readKey("D:/vagrant/.minikube/ca.crt"),
 		}
 		break
 	}
 
 	defer tty.Close()
 
-	tty.Connect()
+	if err := tty.Connect(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func conn(cp *ConnParam, websocket *connector.Websocket) error {
@@ -124,7 +149,9 @@ func conn(cp *ConnParam, websocket *connector.Websocket) error {
 		return err
 	}
 
-	connTTY(connData, websocket)
+	if err := connTTY(connData, websocket); err != nil {
+		return err
+	}
 
 	return nil
 }

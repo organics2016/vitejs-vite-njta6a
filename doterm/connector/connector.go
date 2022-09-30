@@ -78,7 +78,7 @@ func (ws *Websocket) websocketToWriter(write io.Writer) {
 }
 
 type TTY interface {
-	Connect()
+	Connect() error
 
 	// Close 可以为阻塞方法，收听 ctx 的取消事件。
 	// 也可以为非阻塞方法，用户收听到来自 ctx 的取消事件时调用 Close

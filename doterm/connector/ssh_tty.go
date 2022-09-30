@@ -9,74 +9,71 @@ import (
 
 type SSHTty struct {
 	*Websocket
-	Host      string
-	Username  string
-	Password  string
-	SecretKey []byte
-	Port      int
+	Host     string
+	Port     int
+	Username string
+	Password string
+
+	PubKey []byte
+	PriKey []byte
 
 	sshSession *ssh.Session
 	sshClient  *ssh.Client
 }
 
-func (tty *SSHTty) Connect() {
+func (tty *SSHTty) Connect() error {
 
-	//创建ssh
 	config := &ssh.ClientConfig{
-		Timeout:         time.Second * 4, //ssh 连接time out 时间一秒钟, 如果ssh验证错误 会在一秒内返回
-		User:            tty.Username,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout: time.Second * 4,
+		User:    tty.Username,
 	}
 
-	if len(tty.SecretKey) > 0 {
+	if len(tty.PriKey) > 0 {
 
-		signer, err := ssh.ParsePrivateKey(tty.SecretKey)
+		privateKey, err := ssh.ParsePrivateKey(tty.PriKey)
 		if err != nil {
-			tty.OutputError(err)
-			return
+			return err
 		}
-		//config.HostKeyCallback = ssh.FixedHostKey(signer.PublicKey())
-		config.Auth = []ssh.AuthMethod{ssh.PublicKeys(signer)}
+		publicKey, err := ssh.ParsePublicKey(tty.PubKey)
+		if err != nil {
+			return err
+		}
+		config.HostKeyCallback = ssh.FixedHostKey(publicKey)
+		config.Auth = []ssh.AuthMethod{ssh.PublicKeys(privateKey)}
 
 	} else if len(tty.Password) > 0 {
 		config.Auth = []ssh.AuthMethod{ssh.Password(tty.Password)}
 	} else {
-		tty.OutputError(errors.New("Not auth"))
-		return
+		return errors.New("Not auth")
 	}
 
 	addr := fmt.Sprintf("%s:%d", tty.Host, tty.Port)
 	sshClient, err := ssh.Dial("tcp", addr, config)
 	if err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
 	tty.sshClient = sshClient
 
 	session, err := sshClient.NewSession()
 	if err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
 	tty.sshSession = session
 
 	if stdoutPipe, err := session.StdoutPipe(); err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	} else {
 		tty.readerToWebsocket(stdoutPipe)
 	}
 
 	if stderrPipe, err := session.StderrPipe(); err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	} else {
 		tty.readerToWebsocket(stderrPipe)
 	}
 
 	if stdinPipe, err := session.StdinPipe(); err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	} else {
 		tty.websocketToWriter(stdinPipe)
 	}
@@ -90,16 +87,15 @@ func (tty *SSHTty) Connect() {
 
 	// Request pseudo terminal
 	if err := session.RequestPty("xterm", 40, 80, modes); err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
 
 	// Start remote shell
 	if err := session.Shell(); err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
 
+	return nil
 }
 
 func (tty *SSHTty) Close() {

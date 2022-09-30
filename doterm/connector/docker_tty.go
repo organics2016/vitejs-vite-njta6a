@@ -10,15 +10,14 @@ type DockerTty struct {
 	Host        string
 	ContainerID string
 
-	tty types.HijackedResponse
+	tty *types.HijackedResponse
 }
 
-func (tty *DockerTty) Connect() {
+func (tty *DockerTty) Connect() error {
 
 	cli, err := client.NewClientWithOpts(client.WithHost(tty.Host), client.WithAPIVersionNegotiation())
 	if err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
 
 	exec, err := cli.ContainerExecCreate(tty.ctx, tty.ContainerID, types.ExecConfig{
@@ -29,26 +28,25 @@ func (tty *DockerTty) Connect() {
 		Cmd:          []string{"/bin/bash"},
 	})
 	if err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
 
 	attach, err := cli.ContainerExecAttach(tty.ctx, exec.ID, types.ExecStartCheck{Detach: false, Tty: true})
 	if err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
-	tty.tty = attach
+	tty.tty = &attach
 
 	tty.readerToWebsocket(attach.Conn)
 	tty.websocketToWriter(attach.Conn)
 
+	return nil
 }
 
 func (tty *DockerTty) Close() {
 	<-tty.ctx.Done()
 
-	if tty.tty != (types.HijackedResponse{}) {
+	if tty.tty != nil {
 		tty.tty.Close()
 	}
 	if tty.Websocket.wsConn != nil {

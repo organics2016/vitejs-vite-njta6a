@@ -20,7 +20,7 @@ type K8STty struct {
 	CAData       []byte
 }
 
-func (tty *K8STty) Connect() {
+func (tty *K8STty) Connect() error {
 
 	config := &rest.Config{
 		Host: tty.Host,
@@ -34,8 +34,7 @@ func (tty *K8STty) Connect() {
 	// create the clientset
 	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
 
 	req := clientSet.CoreV1().
@@ -56,8 +55,7 @@ func (tty *K8STty) Connect() {
 
 	exec, err := remotecommand.NewSPDYExecutor(config, http.MethodPost, req.URL())
 	if err != nil {
-		tty.OutputError(err)
-		return
+		return err
 	}
 
 	err = exec.Stream(remotecommand.StreamOptions{
@@ -68,12 +66,7 @@ func (tty *K8STty) Connect() {
 	})
 
 	tty.cancel()
-
-	if err != nil {
-		tty.OutputError(err)
-		return
-	}
-
+	return nil
 }
 
 func (tty *K8STty) Close() {
