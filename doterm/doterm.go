@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/emicklei/go-restful/v3"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -131,6 +132,9 @@ func connTTY(connData *ConnData, websocket *connector.Websocket) error {
 			CAData:       caData,                //readKey("D:/vagrant/.minikube/ca.crt"),
 		}
 		break
+
+	default:
+		return errors.New("Host type not recognized.")
 	}
 
 	defer tty.Close()
