@@ -6,7 +6,7 @@ import (
 )
 
 type DockerTty struct {
-	Websocket
+	*Websocket
 	Host        string
 	ContainerID string
 

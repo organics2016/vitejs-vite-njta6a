@@ -20,14 +20,14 @@ var upGrader = websocket.Upgrader{
 	},
 }
 
-func InitWebSocket(w http.ResponseWriter, r *http.Request, ctx context.Context) Websocket {
+func InitWebSocket(w http.ResponseWriter, r *http.Request, ctx context.Context) *Websocket {
 	//创建websocket
 	conn, err := upGrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	ws := Websocket{
+	ws := &Websocket{
 		wsConn: conn,
 	}
 	ws.ctx, ws.cancel = context.WithCancel(ctx)
@@ -77,7 +77,7 @@ func (ws *Websocket) websocketToWriter(write io.Writer) {
 	}()
 }
 
-type Manager interface {
+type TTY interface {
 	Connect()
 
 	// Close 可以为阻塞方法，收听 ctx 的取消事件。

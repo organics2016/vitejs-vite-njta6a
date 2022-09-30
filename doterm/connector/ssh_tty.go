@@ -8,7 +8,7 @@ import (
 )
 
 type SSHTty struct {
-	Websocket
+	*Websocket
 	Host      string
 	Username  string
 	Password  string

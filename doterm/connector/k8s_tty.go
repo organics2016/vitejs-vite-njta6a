@@ -11,7 +11,7 @@ import (
 )
 
 type K8STty struct {
-	Websocket
+	*Websocket
 	Host         string
 	PodNamespace string
 	PodName      string
