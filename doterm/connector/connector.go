@@ -40,8 +40,6 @@ func InitWebSocket(w http.ResponseWriter, r *http.Request, ctx context.Context) 
 
 func (ws *Websocket) OutputError(err error) {
 	ws.wsConn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
-	ws.cancel()
-	ws.wsConn.Close()
 }
 
 func (ws *Websocket) readerToWebsocket(reader io.Reader) {
@@ -75,6 +73,11 @@ func (ws *Websocket) websocketToWriter(write io.Writer) {
 			}
 		}
 	}()
+}
+
+func (ws *Websocket) Close() {
+	ws.cancel()
+	ws.wsConn.Close()
 }
 
 type TTY interface {

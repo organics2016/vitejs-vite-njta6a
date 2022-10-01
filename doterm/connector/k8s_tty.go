@@ -66,15 +66,13 @@ func (tty *K8STty) Connect() error {
 	})
 
 	tty.cancel()
+	<-tty.ctx.Done()
+
 	return nil
 }
 
 func (tty *K8STty) Close() {
-	<-tty.ctx.Done()
 
-	if tty.Websocket.wsConn != nil {
-		tty.Websocket.wsConn.Close()
-	}
 }
 
 func (tty *K8STty) Read(p []byte) (n int, err error) {

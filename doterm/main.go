@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"organics.ink/doterm/connector"
@@ -17,6 +18,7 @@ type ConnParam struct {
 func doterm(c *gin.Context) {
 
 	websocket := connector.InitWebSocket(c.Writer, c.Request, context.Background())
+	defer websocket.Close()
 
 	var connParam ConnParam
 	if err := c.ShouldBindQuery(&connParam); err != nil {
@@ -47,9 +49,10 @@ func parseFlags() {
 
 func main() {
 	parseFlags()
-	fmt.Printf("%v+", bootOptions)
+	fmt.Printf("%v\n", bootOptions)
 
 	server := gin.Default()
+	server.Use(static.Serve("/", static.LocalFile("../client/dist", false)))
 	server.GET("/doterm", doterm)
 	server.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

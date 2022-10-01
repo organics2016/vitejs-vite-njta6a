@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -241,7 +242,24 @@ func test10() {
 
 }
 
+func test11() {
+	file1, err := os.ReadFile("D:/vagrant/authorized_keys")
+	if err != nil {
+		panic(err)
+	}
+	file2, err := os.ReadFile("D:/vagrant/.vagrant/machines/default/virtualbox/private_key")
+	if err != nil {
+		panic(err)
+	}
+
+	str1 := base64.StdEncoding.EncodeToString(file1)
+	println(str1)
+	str2 := base64.StdEncoding.EncodeToString(file2)
+	println(str2)
+
+}
+
 func main() {
-	test10()
+	test11()
 	println("dddddd")
 }

@@ -20,7 +20,6 @@ type ConnData struct {
 	// host
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
-	PubKey   string `json:"pubKey,omitempty"`
 	PriKey   string `json:"priKey,omitempty"`
 
 	// docker
@@ -76,10 +75,6 @@ func connTTY(connData *ConnData, websocket *connector.Websocket) error {
 	switch connData.Type {
 	case "host":
 
-		pubKey, err := base64.StdEncoding.DecodeString(connData.PubKey)
-		if err != nil {
-			return err
-		}
 		priKey, err := base64.StdEncoding.DecodeString(connData.PriKey)
 		if err != nil {
 			return err
@@ -92,7 +87,6 @@ func connTTY(connData *ConnData, websocket *connector.Websocket) error {
 			Port:     connData.Port,
 			Username: connData.Username,
 			Password: connData.Password,
-			PubKey:   pubKey,
 			PriKey:   priKey,
 		}
 		break

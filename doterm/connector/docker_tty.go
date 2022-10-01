@@ -40,16 +40,14 @@ func (tty *DockerTty) Connect() error {
 	tty.readerToWebsocket(attach.Conn)
 	tty.websocketToWriter(attach.Conn)
 
+	<-tty.ctx.Done()
+
 	return nil
 }
 
 func (tty *DockerTty) Close() {
-	<-tty.ctx.Done()
 
 	if tty.tty != nil {
 		tty.tty.Close()
-	}
-	if tty.Websocket.wsConn != nil {
-		tty.Websocket.wsConn.Close()
 	}
 }

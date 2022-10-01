@@ -14,7 +14,6 @@ type SSHTty struct {
 	Username string
 	Password string
 
-	PubKey []byte
 	PriKey []byte
 
 	sshSession *ssh.Session
@@ -24,8 +23,9 @@ type SSHTty struct {
 func (tty *SSHTty) Connect() error {
 
 	config := &ssh.ClientConfig{
-		Timeout: time.Second * 4,
-		User:    tty.Username,
+		Timeout:         time.Second * 4,
+		User:            tty.Username,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
 	if len(tty.PriKey) > 0 {
@@ -34,11 +34,7 @@ func (tty *SSHTty) Connect() error {
 		if err != nil {
 			return err
 		}
-		publicKey, err := ssh.ParsePublicKey(tty.PubKey)
-		if err != nil {
-			return err
-		}
-		config.HostKeyCallback = ssh.FixedHostKey(publicKey)
+
 		config.Auth = []ssh.AuthMethod{ssh.PublicKeys(privateKey)}
 
 	} else if len(tty.Password) > 0 {
@@ -95,19 +91,17 @@ func (tty *SSHTty) Connect() error {
 		return err
 	}
 
+	<-tty.ctx.Done()
+
 	return nil
 }
 
 func (tty *SSHTty) Close() {
-	<-tty.ctx.Done()
 
 	if tty.sshSession != nil {
 		tty.sshSession.Close()
 	}
 	if tty.sshClient != nil {
 		tty.sshClient.Close()
-	}
-	if tty.Websocket.wsConn != nil {
-		tty.Websocket.wsConn.Close()
 	}
 }
