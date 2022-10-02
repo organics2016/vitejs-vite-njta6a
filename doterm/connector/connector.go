@@ -52,6 +52,7 @@ func (ws *Websocket) readerToWebsocket(reader io.Reader) {
 				return
 			} else if n > 0 {
 				if err := ws.wsConn.WriteMessage(websocket.TextMessage, message[0:n]); err != nil {
+					ws.cancel()
 					return
 				}
 			}
