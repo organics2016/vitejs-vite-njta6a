@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
@@ -23,8 +22,6 @@ func initJson() {
 	for _, container := range res {
 		configMap[container["token"].(string)] = container
 	}
-
-	fmt.Printf("%v\n", configMap)
 }
 
 type ConnParam struct {

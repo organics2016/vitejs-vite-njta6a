@@ -43,7 +43,7 @@ type BootOptions struct {
 var bootOptions = &BootOptions{}
 
 func parseFlags() {
-	flag.StringVar(&bootOptions.Server, "s", "http://127.0.0.1/", "aaaaaa")
+	flag.StringVar(&bootOptions.Server, "s", "http://127.0.0.1:8081/json", "Service address for reading connection information")
 	flag.Parse()
 }
 
