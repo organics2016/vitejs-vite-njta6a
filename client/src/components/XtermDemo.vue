@@ -14,8 +14,8 @@ const props = defineProps({
 
 const terminal = ref()
 const term = new Terminal({
-  // rows: 100,
-  // cols: 200,
+  rows: 40,
+  cols: 400,
 });
 
 let ws: WebSocket
@@ -53,9 +53,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="terminal"></div>
+  <div ref="terminal" class="term"></div>
 </template>
 
 <style scoped>
+.term {
 
+}
 </style>

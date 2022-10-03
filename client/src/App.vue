@@ -31,10 +31,10 @@ function refresh() {
 <template>
   <div class="from">
     <div class="from-row">
-      <span>host:</span><input type="text" v-model="from.host">
+      <span>doterm host:</span><input type="text" v-model="from.host">
     </div>
     <div class="from-row">
-      <span>port:</span><input type="number" v-model="from.port">
+      <span>doterm port:</span><input type="number" v-model="from.port">
     </div>
     <div class="from-row">
       <span>token:</span><input type="text" v-model="from.token">
