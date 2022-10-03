@@ -6,8 +6,8 @@ import XtermDemoVue from './components/XtermDemo.vue'
 
 
 const from = reactive({
-  host: undefined,
-  port: undefined,
+  host: '127.0.0.1',
+  port: 2233,
   token: undefined,
   param: undefined,
 })
