@@ -1,27 +1,36 @@
 <script setup lang="ts">
 
-import {onMounted, ref} from 'vue'
+import {onMounted, onUnmounted, ref} from 'vue'
 import {Terminal} from 'xterm'
 import 'xterm/css/xterm.css'
 import {AttachAddon} from 'xterm-addon-attach'
 
+const props = defineProps({
+  host: {type: String, default: "127.0.0.1"},
+  port: {type: Number, default: 2233},
+  token: {type: String, required: true},
+  param: String
+})
+
 const terminal = ref()
 const term = new Terminal({
-  rows: 100,
-  cols: 200,
+  // rows: 100,
+  // cols: 200,
 });
 
+let ws: WebSocket
+
 onMounted(() => {
-  console.log(terminal.value);// <div>
 
-  const socketURL = "ws://127.0.0.1:8080/doterm?token=2&param=testtest1"
-  const ws = new WebSocket(socketURL)
+  let socketURL = "ws://" + props.host + ":" + props.port + "/doterm?token=" + props.token
+  if (props.param) {
+    socketURL = socketURL + "&param=" + props.param
+  }
 
-  //连接打开时触发
-  ws.onopen = function (evt) {
+  ws = new WebSocket(socketURL)
+
+  ws.onopen = function () {
     console.log("Connection open ...");
-
-    // ws.send("aaa")
   };
 
   ws.onclose = function () {
@@ -33,10 +42,12 @@ onMounted(() => {
   term.open(terminal.value)
   term.focus()
 
-  // term.onData(send => {
-  //   console.log("received: %s", send)
-  //   term.write(utf16To8(send))
-  // });
+})
+
+onUnmounted(() => {
+  if (ws) {
+    ws.close()
+  }
 })
 
 </script>

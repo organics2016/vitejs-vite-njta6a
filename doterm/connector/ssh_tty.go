@@ -82,7 +82,7 @@ func (tty *SSHTty) Connect() error {
 	}
 
 	// Request pseudo terminal
-	if err := session.RequestPty("xterm", 40, 80, modes); err != nil {
+	if err := session.RequestPty("xterm", 100, 200, modes); err != nil {
 		return err
 	}
 

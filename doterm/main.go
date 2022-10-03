@@ -37,13 +37,17 @@ func doterm(c *gin.Context) {
 }
 
 type BootOptions struct {
+	Port   int
 	Server string
+	UI     bool
 }
 
 var bootOptions = &BootOptions{}
 
 func parseFlags() {
-	flag.StringVar(&bootOptions.Server, "s", "http://127.0.0.1:8081/json", "Service address for reading connection information")
+	flag.IntVar(&bootOptions.Port, "p", 2233, "The server listening port (default 2233)")
+	flag.StringVar(&bootOptions.Server, "s", "http://127.0.0.1:2234/json", "Service address for reading connection information (default http://127.0.0.1:2234/json)")
+	flag.BoolVar(&bootOptions.UI, "ui", false, "Enable proxy html term pages (default false)")
 	flag.Parse()
 }
 
@@ -52,7 +56,9 @@ func main() {
 	fmt.Printf("%v\n", bootOptions)
 
 	server := gin.Default()
-	server.Use(static.Serve("/", static.LocalFile("../client/dist", false)))
+	if bootOptions.UI {
+		server.Use(static.Serve("/", static.LocalFile("../client/dist", false)))
+	}
 	server.GET("/doterm", doterm)
-	server.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	server.Run(fmt.Sprintf(":%d", bootOptions.Port)) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

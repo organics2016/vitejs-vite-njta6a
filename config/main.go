@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
@@ -46,9 +48,21 @@ func jsonS(c *gin.Context) {
 	c.JSON(http.StatusOK, container)
 }
 
+type BootOptions struct {
+	Port int
+}
+
+var bootOptions = &BootOptions{}
+
+func parseFlags() {
+	flag.IntVar(&bootOptions.Port, "p", 2234, "The server listening port (default 2234)")
+	flag.Parse()
+}
+
 func main() {
+	parseFlags()
 	initJson()
 	server := gin.Default()
 	server.GET("/json", jsonS)
-	server.Run(":8081") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	server.Run(fmt.Sprintf(":%d", bootOptions.Port)) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
